@@ -1,5 +1,5 @@
-const { default: axios } = require("axios")
-const dayjs = require("dayjs")
+import axios from 'axios'
+import dayjs from 'dayjs'
 
 const vehiclePositionsQuery = `{
     vehiclePositions(
@@ -55,7 +55,7 @@ const fetchTrainPosition = async () =>{
             'Content-Type': 'application/json',
             "Accept": "application/json"
     }})
-    if(res.status !== 200) throw new Error(res)
+    //if(res.status !== 200) throw new Error('1')
 
     return res.data.data?.vehiclePositions || {}
 }
@@ -68,28 +68,46 @@ const fetchTripDetails = async (gtfsId, serviceDay) =>{
             'Content-Type': 'application/json',
             "Accept": "application/json"
     }})
-    if(res.status !== 200) throw new Error(res)
+    //if(res.status !== 200) throw new Error('2')
     return res.data.data?.trip || {}
 }
 
-function getServiceDay() {
+const getServiceDay =()=> {
   return dayjs().format('YYYY-MM-DD');
 }
 
-const getTrains= async ()=>{
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const secondsToHHMM = (seconds) => {
+    let totalMinutes = Math.floor(seconds / 60);
+    let hours = Math.floor(totalMinutes / 60);
+    let minutes = totalMinutes % 60;
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+export const getTrains= async ()=>{
     const trains = await fetchTrainPosition()
     const serviceDay = getServiceDay()
     const data = {
         'lastUpdate': dayjs().unix(),
         'trains': Array()
     }
-
+    console.log(trains);
+    
+    let count = 0
     for (const train of trains) {
-        const trip = trains.trip
+        if(count >= 3)
+            break;
+        const trip = train.trip
         const { gtfsId, tripShortName, tripHeadsign } = trip
         const { vehicleId, lat, lon, label, speed, heading } = train
 
+        await delay(500)
+
         const tripDetails = await fetchTripDetails(gtfsId, serviceDay)
+        console.log(tripDetails);
+        
         const { 
             trainCategoryName, 
             trainName,
@@ -101,20 +119,25 @@ const getTrains= async ()=>{
         
         const stopCompressed = Array()
 
-        for (const stop of stoptimes) {
-            const { 
-                stop, 
-                lat, 
-                lon, 
-                name, 
-                platformCode, 
+        for (const st of stoptimes) {
+            let {
+                stop:{
+                    lat, 
+                    lon,
+                    name,
+                    platformCode,
+                },
                 realtimeArrival,
                 realtimeDeparture,
                 scheduledArrival,
                 scheduledDeparture,
                 arrivalDelay,
                 departureDelay
-            } = stop
+            } = st
+            realtimeArrival = secondsToHHMM(realtimeArrival)
+            realtimeDeparture = secondsToHHMM(realtimeDeparture)
+            scheduledArrival = secondsToHHMM(scheduledArrival)
+            scheduledDeparture = secondsToHHMM(scheduledDeparture)
 
             stopCompressed.push({
                 'name': name,
@@ -125,22 +148,23 @@ const getTrains= async ()=>{
                 'a': arrivalDelay,
                 'd': departureDelay,
                 'v': platformCode
-            })
-
-            name = tripShortName
-            if (longName != null && longName.length < 6)
-                name = `[${longName}] ${tripShortName}`
-
-            data.trains.push({
-                "id": gtfsId,
-                "name": name,
-                "headsgn": tripHeadsign,
-                'lat': lat,
-                'lon': lon,
-                'sp': speed,
-                'hd': heading,
-                'stops': stopCompressed
-            })
+            })          
         }
+        let name = tripShortName
+        if (longName !== null && longName.length < 6)
+            name = `[${longName}] ${tripShortName}`
+
+        data.trains.push({
+            "id": gtfsId,
+            "name": name,
+            "headsgn": tripHeadsign,
+            'lat': lat,
+            'lon': lon,
+            'sp': speed,
+            'hd': heading,
+            'stops': stopCompressed
+        })
+        count++
     }
+    return data
 }
