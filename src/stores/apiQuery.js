@@ -79,7 +79,10 @@ function getServiceDay() {
 const getTrains= async ()=>{
     const trains = await fetchTrainPosition()
     const serviceDay = getServiceDay()
-    const data = Array()
+    const data = {
+        'lastUpdate': dayjs().unix(),
+        'trains': Array()
+    }
 
     for (const train of trains) {
         const trip = trains.trip
@@ -122,6 +125,21 @@ const getTrains= async ()=>{
                 'a': arrivalDelay,
                 'd': departureDelay,
                 'v': platformCode
+            })
+
+            name = tripShortName
+            if (longName != null && longName.length < 6)
+                name = `[${longName}] ${tripShortName}`
+
+            data.trains.push({
+                "id": gtfsId,
+                "name": name,
+                "headsgn": tripHeadsign,
+                'lat': lat,
+                'lon': lon,
+                'sp': speed,
+                'hd': heading,
+                'stops': stopCompressed
             })
         }
     }

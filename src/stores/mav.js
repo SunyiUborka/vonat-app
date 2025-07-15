@@ -14,19 +14,6 @@ export const useMavStore = defineStore('mav',  {
       this.error = null
       let trains
       try{
-        const res = await axios.post('/graphql-proxy',
-          {query: vehiclePositions},
-          {headers: {
-            'Content-Type': 'application/json'
-          }})
-          
-        
-
-        for (const train of trains) {
-          trip = train.trip
-          gtfsId = trip.gtfsId
-          tripDetails = 
-        }
 
       }catch (err){
         this.error = err.message
