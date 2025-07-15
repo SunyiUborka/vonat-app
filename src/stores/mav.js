@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import axios from 'axios'
-import { vehiclePositions, tripDetails } from '@/stores/apiRequests'
+import { vehiclePositions, tripDetails } from '@/stores/apiQuery'
 
 export const useMavStore = defineStore('mav',  {
   state: ()=>({
@@ -12,7 +12,7 @@ export const useMavStore = defineStore('mav',  {
     async fetchTrains(){
       this.loading = true
       this.error = null
-
+      let trains
       try{
         const res = await axios.post('/graphql-proxy',
           {query: vehiclePositions},
@@ -20,13 +20,22 @@ export const useMavStore = defineStore('mav',  {
             'Content-Type': 'application/json'
           }})
           
-        if(res.status !== 200) throw new Error(res)
-          this.data = res.data.data.vehiclePositions
+        
+
+        for (const train of trains) {
+          trip = train.trip
+          gtfsId = trip.gtfsId
+          tripDetails = 
+        }
+
       }catch (err){
         this.error = err.message
       }finally{
         this.loading = false
       }
+    },
+    async fetchTrainTrips(){
+
     }
   },
   getters:{
