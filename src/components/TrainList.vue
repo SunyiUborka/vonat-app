@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue';
 import TrainItem from './TrainItem.vue';
 import { useMavStore } from '@/stores/mav'
 const mavStore = useMavStore()
-//const { fetchTrains, getTrains } = mavStore
+
 const trains = ref([])
 onMounted(async ()=>{
     await mavStore.fetchTrains() 

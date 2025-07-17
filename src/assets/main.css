@@ -4,8 +4,13 @@
 
 *{
   margin: 0;
+  height: 100%;
 }
 
 body{
   background-color: #1A1A1A;
+}
+
+#app {
+  height: 100%;
 }
